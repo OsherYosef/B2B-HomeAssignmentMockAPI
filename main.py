@@ -10,6 +10,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
+
 # ------------------------
 # Utility
 # ------------------------
@@ -73,22 +74,35 @@ BASE_DRONES = [
     }
 ]
 
+
 # ------------------------
 # System A schema
 # ------------------------
 
 class SystemAResponse(BaseModel):
-    drone_id: str
-    timestamp: int
-    Location_lat: float
-    Location_lon: float
-    Locatin_alt: float = Field(..., description="Typo is intentional")
-    drone_model: str
+    Drone_id: str = Field(description='Serial number of the detected drone - With prefix "A-"')
+    Timestamp: int = Field(description='Unix timestamp in milliseconds')
+    Location_lat: float = Field(description='Latitude')
+    Location_lon: float = Field(description='Longitude')
+    Locatin_alt: float = Field(description="Altitude of the detected drone - Typo is intentional")
+    Drone_model: str = Field(description='The model of the drone')
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "Drone_id": "A-DRN-5",
+                "Timestamp": 1768837333702,
+                "Location_lat": 31.12,
+                "Location_lon": 33.56,
+                "Locatin_alt": 10.2,
+                "Drone_model": "DJI Mini 2"
+            }
+        }
+    }
+    # ------------------------
+    # System B schema
+    # ------------------------
 
-# ------------------------
-# System B schema
-# ------------------------
 
 class GeoJSONPoint(BaseModel):
     type: str = "Point"
@@ -96,12 +110,28 @@ class GeoJSONPoint(BaseModel):
 
 
 class SystemBResponse(BaseModel):
-    Serial: str
-    Detection_timestamp: str
-    Location: GeoJSONPoint
-    type: str
-    Model: str
-    manufacturer: str
+    Serial: str = Field(description='Serial number of the detected drone - With prefix "SN-"')
+    Detection_timestamp: str = Field(description='Detection Timestamp - ISO format')
+    Location: GeoJSONPoint = Field(description='GeoPoint of the detection -> Longitude,Latitude,Altitude')
+    Model: str = Field(description='The model of the drone')
+    manufacturer: str = Field(description='The Manufacturer of the drone')
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {"Serial": "SN-DRN-1",
+                        "Detection_timestamp": "2026-01-19T15:56:05.049630+00:00",
+                        "Location": {
+                            "type": "Point",
+                            "coordinates": [
+                                34.782258162654294,
+                                32.08483668089487,
+                                124.17810117029919
+                            ]
+                        },
+                        "Model": "3",
+                        "manufacturer": "DJI"}
+        }
+    }
 
 
 # ------------------------
@@ -110,6 +140,7 @@ class SystemBResponse(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
 
 @app.get(
     "/system-a/detections",
@@ -125,12 +156,12 @@ def get_system_a_detections():
 
     for drone in BASE_DRONES:
         responses.append(SystemAResponse(
-            drone_id=f"A-{drone['id']}",
-            timestamp=now_epoch(),
+            Drone_id=f"A-{drone['id']}",
+            Timestamp=now_epoch(),
             Location_lat=jitter(drone["lat"]),
             Location_lon=jitter(drone["lon"]),
             Locatin_alt=drone["alt"] + random.uniform(-5, 5),
-            drone_model=drone["model"]
+            Drone_model=drone["model"]
         ))
 
     return responses
@@ -158,7 +189,6 @@ def get_system_b_detections():
                     drone["alt"] + random.uniform(-5, 5)
                 ]
             ),
-            type="UAV",
             Model=drone["model"].split()[-1],
             manufacturer=drone["manufacturer"]
         ))
