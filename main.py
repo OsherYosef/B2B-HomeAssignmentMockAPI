@@ -155,13 +155,21 @@ def get_system_a_detections():
     responses = []
 
     for drone in BASE_DRONES:
+        drone_to_return = {**drone}
+
+        if drone_to_return['id'] == 'DRN-4':
+            drone_to_return['id'] += str(datetime.now().second % 7)
+
+        if drone_to_return['id'] == 'DRN-5':
+            drone_to_return['id'] += str(datetime.now().minute % 5)
+
         responses.append(SystemAResponse(
-            Drone_id=f"A-{drone['id']}",
+            Drone_id=f"{drone_to_return['id']}",
             Timestamp=now_epoch(),
-            Location_lat=jitter(drone["lat"]),
-            Location_lon=jitter(drone["lon"]),
-            Locatin_alt=drone["alt"] + random.uniform(-5, 5),
-            Drone_model=drone["model"]
+            Location_lat=jitter(drone_to_return["lat"]),
+            Location_lon=jitter(drone_to_return["lon"]),
+            Locatin_alt=drone_to_return["alt"] + random.uniform(-5, 5),
+            Drone_model=drone_to_return["model"]
         ))
 
     return responses
@@ -179,18 +187,25 @@ def get_system_b_detections():
     responses = []
 
     for drone in BASE_DRONES:
+        drone_to_return = {**drone}
+        if drone_to_return['id'] == 'DRN-4':
+            drone_to_return['id'] += str(datetime.now().second % 7)
+
+        if drone_to_return['id'] == 'DRN-5':
+            drone_to_return['id'] += str(datetime.now().minute % 5)
+
         responses.append(SystemBResponse(
-            Serial=f"SN-{drone['id']}",
+            Serial=f"{drone_to_return['id']}",
             Detection_timestamp=now_iso(),
             Location=GeoJSONPoint(
                 coordinates=[
-                    jitter(drone["lon"]),
-                    jitter(drone["lat"]),
-                    drone["alt"] + random.uniform(-5, 5)
+                    jitter(drone_to_return["lon"]),
+                    jitter(drone_to_return["lat"]),
+                    drone_to_return["alt"] + random.uniform(-5, 5)
                 ]
             ),
-            Model=drone["model"].split()[-1],
-            manufacturer=drone["manufacturer"]
+            Model=drone_to_return["model"].split()[-1],
+            manufacturer=drone_to_return["manufacturer"]
         ))
 
     return responses
